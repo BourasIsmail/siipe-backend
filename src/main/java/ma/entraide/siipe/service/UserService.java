@@ -3,11 +3,13 @@ package ma.entraide.siipe.service;
 import lombok.RequiredArgsConstructor;
 import ma.entraide.siipe.dto.request.CreateUserRequest;
 import ma.entraide.siipe.dto.response.UserResponse;
+import ma.entraide.siipe.entity.EtablissementCentre;
 import ma.entraide.siipe.entity.Province;
 import ma.entraide.siipe.entity.Region;
 import ma.entraide.siipe.entity.User;
 import ma.entraide.siipe.exception.BadRequestException;
 import ma.entraide.siipe.exception.ResourceNotFoundException;
+import ma.entraide.siipe.repository.EtablissementCentreRepository;
 import ma.entraide.siipe.repository.ProvinceRepository;
 import ma.entraide.siipe.repository.RegionRepository;
 import ma.entraide.siipe.repository.UserRepository;
@@ -26,6 +28,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RegionRepository regionRepository;
     private final ProvinceRepository provinceRepository;
+    private final EtablissementCentreRepository etablissementCentreRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
@@ -46,6 +49,12 @@ public class UserService {
                     .orElseThrow(() -> new ResourceNotFoundException("Province non trouvée"));
         }
 
+        EtablissementCentre etablissementCentre = null;
+        if (request.getEtablissementCentreId() != null) {
+            etablissementCentre = etablissementCentreRepository.findById(request.getEtablissementCentreId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Établissement non trouvé"));
+        }
+
         // Generate reset token for account activation
         String resetToken = UUID.randomUUID().toString();
 
@@ -57,6 +66,7 @@ public class UserService {
                 .role(request.getRole())
                 .region(region)
                 .province(province)
+                .etablissementCentre(etablissementCentre)
                 .active(false)
                 .resetPasswordToken(resetToken)
                 .resetPasswordTokenExpiry(LocalDateTime.now().plusHours(24))
@@ -107,6 +117,12 @@ public class UserService {
             user.setProvince(province);
         }
 
+        if (request.getEtablissementCentreId() != null) {
+            EtablissementCentre etablissementCentre = etablissementCentreRepository.findById(request.getEtablissementCentreId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Établissement non trouvé"));
+            user.setEtablissementCentre(etablissementCentre);
+        }
+
         userRepository.save(user);
         return toResponse(user);
     }
@@ -142,6 +158,8 @@ public class UserService {
                 .regionNom(user.getRegion() != null ? user.getRegion().getNomFr() : null)
                 .provinceId(user.getProvince() != null ? user.getProvince().getId() : null)
                 .provinceNom(user.getProvince() != null ? user.getProvince().getNomFr() : null)
+                .etablissementCentreId(user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : null)
+                .etablissementCentreNom(user.getEtablissementCentre() != null ? user.getEtablissementCentre().getNomFr() : null)
                 .createdAt(user.getCreatedAt())
                 .build();
     }

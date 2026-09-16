@@ -45,6 +45,11 @@ public class BeneficiaireService {
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
+    public List<BeneficiaireResponse> getByEtablissement(Long etablissementId) {
+        return beneficiaireRepo.findByEtablissementCentreIdAndDeletedFalse(etablissementId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
     public List<BeneficiaireResponse> search(
             String nom, String prenom, String cin,
             Sexe sexe, SituationDifficulte situationDifficulte,

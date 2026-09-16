@@ -56,6 +56,8 @@ public class AuthService {
                 .provinceNom(user.getProvince() != null ? user.getProvince().getNomFr() : null)
                 .regionId(user.getRegion() != null ? user.getRegion().getId() : null)
                 .regionNom(user.getRegion() != null ? user.getRegion().getNomFr() : null)
+                .etablissementCentreId(user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : null)
+                .etablissementCentreNom(user.getEtablissementCentre() != null ? user.getEtablissementCentre().getNomFr() : null)
                 .build();
     }
 

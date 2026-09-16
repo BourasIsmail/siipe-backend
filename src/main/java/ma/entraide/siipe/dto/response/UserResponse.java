@@ -20,5 +20,7 @@ public class UserResponse {
     private String regionNom;
     private Long provinceId;
     private String provinceNom;
+    private Long etablissementCentreId;
+    private String etablissementCentreNom;
     private LocalDateTime createdAt;
 }
