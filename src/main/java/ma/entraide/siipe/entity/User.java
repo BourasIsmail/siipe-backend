@@ -45,6 +45,10 @@ public class User implements UserDetails {
     @JoinColumn(name = "province_id")
     private Province province;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "etablissement_centre_id")
+    private EtablissementCentre etablissementCentre;
+
     @Column(nullable = false)
     @Builder.Default
     private boolean active = false;

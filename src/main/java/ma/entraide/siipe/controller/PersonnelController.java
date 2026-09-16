@@ -5,9 +5,11 @@ import lombok.RequiredArgsConstructor;
 import ma.entraide.siipe.dto.request.PersonnelRequest;
 import ma.entraide.siipe.dto.response.PersonnelResponse;
 import ma.entraide.siipe.entity.User;
+import ma.entraide.siipe.enums.Role;
 import ma.entraide.siipe.service.PersonnelService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -26,16 +28,18 @@ public class PersonnelController {
     @GetMapping
     public ResponseEntity<List<PersonnelResponse>> getAll(@AuthenticationPrincipal User user) {
         // DELEGUE only sees personnel from their province
-        if (user.getProvince() != null &&
-                user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DELEGUE"))) {
+        if (user.getRole() == Role.ROLE_DELEGUE) {
+            if (user.getProvince() == null) return ResponseEntity.ok(List.of());
             return ResponseEntity.ok(personnelService.getByProvince(user.getProvince().getId()));
         }
         return ResponseEntity.ok(personnelService.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PersonnelResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(personnelService.getById(id));
+    public ResponseEntity<PersonnelResponse> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        PersonnelResponse response = personnelService.getById(id);
+        checkProvinceScope(user, response.getProvinceId());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/etablissement/{etablissementId}")
@@ -44,26 +48,38 @@ public class PersonnelController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_CHEF_SERVICE','ROLE_CHEF_DIVISION','ROLE_DIRECTEUR_CENTRALE')")
     public ResponseEntity<PersonnelResponse> create(@Valid @RequestBody PersonnelRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(personnelService.create(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_CHEF_SERVICE','ROLE_CHEF_DIVISION','ROLE_DIRECTEUR_CENTRALE')")
     public ResponseEntity<PersonnelResponse> update(@PathVariable Long id,
                                                     @Valid @RequestBody PersonnelRequest request) {
         return ResponseEntity.ok(personnelService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_DELEGUE')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         personnelService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/photo")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_CHEF_SERVICE','ROLE_CHEF_DIVISION','ROLE_DIRECTEUR_CENTRALE')")
     public ResponseEntity<PersonnelResponse> uploadPhoto(@PathVariable Long id,
                                                          @RequestParam("file") MultipartFile file) {
         return ResponseEntity.ok(personnelService.uploadPhoto(id, file));
+    }
+
+    private void checkProvinceScope(User user, Long provinceId) {
+        if (user.getRole() == Role.ROLE_DELEGUE) {
+            Long userProvinceId = user.getProvince() != null ? user.getProvince().getId() : null;
+            if (userProvinceId == null || !userProvinceId.equals(provinceId)) {
+                throw new AccessDeniedException("Accès refusé : ce personnel n'appartient pas à votre province");
+            }
+        }
     }
 }

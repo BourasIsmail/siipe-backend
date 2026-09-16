@@ -5,12 +5,14 @@ import lombok.RequiredArgsConstructor;
 import ma.entraide.siipe.dto.request.*;
 import ma.entraide.siipe.dto.response.*;
 import ma.entraide.siipe.entity.User;
+import ma.entraide.siipe.enums.Role;
 import ma.entraide.siipe.enums.Sexe;
 import ma.entraide.siipe.enums.SituationDifficulte;
 import ma.entraide.siipe.service.BeneficiaireService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +30,12 @@ public class BeneficiaireController {
 
     @GetMapping
     public ResponseEntity<List<BeneficiaireResponse>> getAll(@AuthenticationPrincipal User user) {
-        if (user.getProvince() != null &&
-                user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DELEGUE"))) {
+        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE) {
+            if (user.getEtablissementCentre() == null) return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(beneficiaireService.getByEtablissement(user.getEtablissementCentre().getId()));
+        }
+        if (user.getRole() == Role.ROLE_DELEGUE) {
+            if (user.getProvince() == null) return ResponseEntity.ok(List.of());
             return ResponseEntity.ok(beneficiaireService.getByProvince(user.getProvince().getId()));
         }
         return ResponseEntity.ok(beneficiaireService.getAll());
@@ -52,21 +58,39 @@ public class BeneficiaireController {
             @AuthenticationPrincipal User user) {
 
         Long filteredProvinceId = provinceId;
-        if (user.getProvince() != null &&
-                user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DELEGUE"))) {
-            filteredProvinceId = user.getProvince().getId();
+        Long filteredEtablissementId = etablissementId;
+        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE) {
+            filteredEtablissementId = user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : -1L;
+        } else if (user.getRole() == Role.ROLE_DELEGUE) {
+            filteredProvinceId = user.getProvince() != null ? user.getProvince().getId() : -1L;
         }
 
         return ResponseEntity.ok(beneficiaireService.search(
                 nom, prenom, cin, sexe, situationDifficulte,
                 dateNaissanceFrom, dateNaissanceTo,
                 dateEntreeFrom, dateEntreeTo,
-                etablissementId, filteredProvinceId, typeHandicap));
+                filteredEtablissementId, filteredProvinceId, typeHandicap));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BeneficiaireResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(beneficiaireService.getById(id));
+    public ResponseEntity<BeneficiaireResponse> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        BeneficiaireResponse response = beneficiaireService.getById(id);
+        checkScopeAccess(user, response.getProvinceId(), response.getEtablissementCentreId());
+        return ResponseEntity.ok(response);
+    }
+
+    private void checkScopeAccess(User user, Long provinceId, Long etablissementCentreId) {
+        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE) {
+            Long userEtablissementId = user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : null;
+            if (userEtablissementId == null || !userEtablissementId.equals(etablissementCentreId)) {
+                throw new AccessDeniedException("Accès refusé : ce bénéficiaire n'appartient pas à votre établissement");
+            }
+        } else if (user.getRole() == Role.ROLE_DELEGUE) {
+            Long userProvinceId = user.getProvince() != null ? user.getProvince().getId() : null;
+            if (userProvinceId == null || !userProvinceId.equals(provinceId)) {
+                throw new AccessDeniedException("Accès refusé : ce bénéficiaire n'appartient pas à votre province");
+            }
+        }
     }
 
     @PostMapping
@@ -83,7 +107,7 @@ public class BeneficiaireController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_DELEGUE')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         beneficiaireService.delete(id);
         return ResponseEntity.noContent().build();

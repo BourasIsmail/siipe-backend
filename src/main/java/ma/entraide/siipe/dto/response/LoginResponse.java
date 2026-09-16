@@ -16,4 +16,6 @@ public class LoginResponse {
     private String provinceNom;
     private Long regionId;
     private String regionNom;
+    private Long etablissementCentreId;
+    private String etablissementCentreNom;
 }

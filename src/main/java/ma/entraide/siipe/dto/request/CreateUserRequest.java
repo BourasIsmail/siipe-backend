@@ -18,4 +18,5 @@ public class CreateUserRequest {
     private Role role;
     private Long regionId;
     private Long provinceId;
+    private Long etablissementCentreId;
 }
