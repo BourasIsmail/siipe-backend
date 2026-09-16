@@ -1,2 +1,13 @@
-package ma.entraide.siipe.enums;public class PosteOccupe {
+package ma.entraide.siipe.enums;
+
+public enum PosteOccupe {
+    CHEF_DU_SERVICE,
+    CHEF_DE_DIVISION,
+    SOUS_DIRECTEUR,
+    DIRECTEUR,
+    DIRECTEUR_DU_CENTRE,
+    DIRECTEUR_PROVINCIAL,
+    DIRECTEUR_REGIONAL,
+    CHEF_BUREAU_ADMINISTRATIF_TECHNIQUE,
+    INSPECTEUR
 }

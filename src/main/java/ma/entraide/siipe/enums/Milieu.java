@@ -1,2 +1,5 @@
-package ma.entraide.siipe.enums;public class Milieu {
+package ma.entraide.siipe.enums;
+
+public enum Milieu {
+    URBAIN, RURAL
 }

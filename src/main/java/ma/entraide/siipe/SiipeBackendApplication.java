@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class SiipeBackendApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(SiipeBackendApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(SiipeBackendApplication.class, args);
+    }
 
 }

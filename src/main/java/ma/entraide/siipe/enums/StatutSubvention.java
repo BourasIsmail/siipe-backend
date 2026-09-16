@@ -1,2 +1,5 @@
-package ma.entraide.siipe.enums;public class StatutSubvention {
+package ma.entraide.siipe.enums;
+
+public enum StatutSubvention {
+    EN_COURS, TERMINEE, SUSPENDUE, ANNULEE
 }

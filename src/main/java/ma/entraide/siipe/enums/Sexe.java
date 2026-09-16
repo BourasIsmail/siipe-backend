@@ -1,2 +1,5 @@
-package ma.entraide.siipe.enums;public class Sexe {
+package ma.entraide.siipe.enums;
+
+public enum Sexe {
+    MASCULIN, FEMININ
 }

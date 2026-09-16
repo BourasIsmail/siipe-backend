@@ -1,2 +1,12 @@
-package ma.entraide.siipe.enums;public enum Role {
+package ma.entraide.siipe.enums;
+
+public enum Role {
+    ROLE_ADMIN,
+    ROLE_DELEGUE,//non modification
+    ROLE_CHEF_SERVICE,
+    ROLE_CHEF_DIVISION,
+    ROLE_DIRECTEUR_CENTRALE,
+    ROLE_RESPONSABLE_ALERTE,
+    ROLE_RESPONSABLE_SIGNALEMENT,
+    ROLE_ASSISTANTE_SOCIALE
 }
