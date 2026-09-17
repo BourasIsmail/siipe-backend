@@ -30,7 +30,7 @@ public class BeneficiaireController {
 
     @GetMapping
     public ResponseEntity<List<BeneficiaireResponse>> getAll(@AuthenticationPrincipal User user) {
-        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE) {
+        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE || user.getRole() == Role.ROLE_ASSISTANTE_SOCIALE) {
             if (user.getEtablissementCentre() == null) return ResponseEntity.ok(List.of());
             return ResponseEntity.ok(beneficiaireService.getByEtablissement(user.getEtablissementCentre().getId()));
         }
@@ -59,7 +59,7 @@ public class BeneficiaireController {
 
         Long filteredProvinceId = provinceId;
         Long filteredEtablissementId = etablissementId;
-        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE) {
+        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE || user.getRole() == Role.ROLE_ASSISTANTE_SOCIALE) {
             filteredEtablissementId = user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : -1L;
         } else if (user.getRole() == Role.ROLE_DELEGUE) {
             filteredProvinceId = user.getProvince() != null ? user.getProvince().getId() : -1L;
@@ -80,7 +80,7 @@ public class BeneficiaireController {
     }
 
     private void checkScopeAccess(User user, Long provinceId, Long etablissementCentreId) {
-        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE) {
+        if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE || user.getRole() == Role.ROLE_ASSISTANTE_SOCIALE) {
             Long userEtablissementId = user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : null;
             if (userEtablissementId == null || !userEtablissementId.equals(etablissementCentreId)) {
                 throw new AccessDeniedException("Accès refusé : ce bénéficiaire n'appartient pas à votre établissement");
@@ -95,20 +95,26 @@ public class BeneficiaireController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_ASSISTANTE_SOCIALE')")
-    public ResponseEntity<BeneficiaireResponse> create(@Valid @RequestBody BeneficiaireRequest request) {
+    public ResponseEntity<BeneficiaireResponse> create(@Valid @RequestBody BeneficiaireRequest request,
+                                                        @AuthenticationPrincipal User user) {
+        checkOwnEtablissementScope(user, request.getEtablissementCentreId());
         return ResponseEntity.status(HttpStatus.CREATED).body(beneficiaireService.create(request));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_ASSISTANTE_SOCIALE')")
     public ResponseEntity<BeneficiaireResponse> update(@PathVariable Long id,
-                                                       @Valid @RequestBody BeneficiaireRequest request) {
+                                                       @Valid @RequestBody BeneficiaireRequest request,
+                                                       @AuthenticationPrincipal User user) {
+        checkOwnEtablissementScope(user, beneficiaireService.getById(id).getEtablissementCentreId());
+        checkOwnEtablissementScope(user, request.getEtablissementCentreId());
         return ResponseEntity.ok(beneficiaireService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_ASSISTANTE_SOCIALE')")
+    public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        checkOwnEtablissementScope(user, beneficiaireService.getById(id).getEtablissementCentreId());
         beneficiaireService.delete(id);
         return ResponseEntity.noContent().build();
     }
@@ -116,8 +122,19 @@ public class BeneficiaireController {
     @PostMapping("/{id}/photo")
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_ASSISTANTE_SOCIALE')")
     public ResponseEntity<BeneficiaireResponse> uploadPhoto(@PathVariable Long id,
-                                                            @RequestParam("file") MultipartFile file) {
+                                                            @RequestParam("file") MultipartFile file,
+                                                            @AuthenticationPrincipal User user) {
+        checkOwnEtablissementScope(user, beneficiaireService.getById(id).getEtablissementCentreId());
         return ResponseEntity.ok(beneficiaireService.uploadPhoto(id, file));
+    }
+
+    private void checkOwnEtablissementScope(User user, Long etablissementCentreId) {
+        if (user.getRole() == Role.ROLE_ASSISTANTE_SOCIALE) {
+            Long userEtablissementId = user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : null;
+            if (userEtablissementId == null || !userEtablissementId.equals(etablissementCentreId)) {
+                throw new AccessDeniedException("Accès refusé : ce bénéficiaire n'appartient pas à votre établissement");
+            }
+        }
     }
 
     // --- Sub-situations ---
