@@ -35,6 +35,11 @@ public class PartenaireService {
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
+    public List<PartenaireResponse> getByRegion(Long regionId) {
+        return partenaireRepo.findByRegionIdAndDeletedFalse(regionId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
     public PartenaireResponse getById(Long id) {
         return toResponse(findById(id));
     }

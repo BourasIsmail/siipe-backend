@@ -4,10 +4,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ma.entraide.siipe.dto.request.SubventionRequest;
 import ma.entraide.siipe.dto.response.SubventionResponse;
+import ma.entraide.siipe.entity.User;
+import ma.entraide.siipe.enums.Role;
 import ma.entraide.siipe.service.SubventionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,13 +25,24 @@ public class SubventionController {
     private final SubventionService subventionService;
 
     @GetMapping
-    public ResponseEntity<List<SubventionResponse>> getAll() {
+    public ResponseEntity<List<SubventionResponse>> getAll(@AuthenticationPrincipal User user) {
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            if (user.getRegion() == null) return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(subventionService.getByRegion(user.getRegion().getId()));
+        }
         return ResponseEntity.ok(subventionService.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SubventionResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(subventionService.getById(id));
+    public ResponseEntity<SubventionResponse> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        SubventionResponse response = subventionService.getById(id);
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            Long userRegionId = user.getRegion() != null ? user.getRegion().getId() : null;
+            if (userRegionId == null || !userRegionId.equals(response.getRegionId())) {
+                throw new AccessDeniedException("Accès refusé : cette subvention n'appartient pas à votre région");
+            }
+        }
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping

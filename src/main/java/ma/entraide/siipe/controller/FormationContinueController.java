@@ -4,10 +4,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ma.entraide.siipe.dto.request.FormationContinueRequest;
 import ma.entraide.siipe.dto.response.FormationContinueResponse;
+import ma.entraide.siipe.entity.User;
+import ma.entraide.siipe.enums.Role;
 import ma.entraide.siipe.service.FormationContinueService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,16 +26,30 @@ public class FormationContinueController {
     private final FormationContinueService formationService;
 
     @GetMapping
-    public ResponseEntity<List<FormationContinueResponse>> getAll() {
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_DELEGUE','ROLE_CHEF_SERVICE','ROLE_CHEF_DIVISION','ROLE_DIRECTEUR_CENTRALE','ROLE_COORDINATION')")
+    public ResponseEntity<List<FormationContinueResponse>> getAll(@AuthenticationPrincipal User user) {
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            if (user.getRegion() == null) return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(formationService.getByRegion(user.getRegion().getId()));
+        }
         return ResponseEntity.ok(formationService.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FormationContinueResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(formationService.getById(id));
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_DELEGUE','ROLE_CHEF_SERVICE','ROLE_CHEF_DIVISION','ROLE_DIRECTEUR_CENTRALE','ROLE_COORDINATION')")
+    public ResponseEntity<FormationContinueResponse> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        FormationContinueResponse response = formationService.getById(id);
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            Long userRegionId = user.getRegion() != null ? user.getRegion().getId() : null;
+            if (userRegionId == null || !userRegionId.equals(response.getRegionId())) {
+                throw new AccessDeniedException("Accès refusé : cette formation n'appartient pas à votre région");
+            }
+        }
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/etablissement/{etablissementId}")
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_DELEGUE','ROLE_CHEF_SERVICE','ROLE_CHEF_DIVISION','ROLE_DIRECTEUR_CENTRALE','ROLE_COORDINATION')")
     public ResponseEntity<List<FormationContinueResponse>> getByEtablissement(@PathVariable Long etablissementId) {
         return ResponseEntity.ok(formationService.getByEtablissement(etablissementId));
     }

@@ -60,6 +60,8 @@ public class BeneficiaireResponse {
     private String assistanteSocialeNom;
     private Long provinceId;
     private String provinceNom;
+    private Long regionId;
+    private String regionNom;
     private LocalDateTime createdAt;
     private String createdBy;
     private LocalDateTime updatedAt;

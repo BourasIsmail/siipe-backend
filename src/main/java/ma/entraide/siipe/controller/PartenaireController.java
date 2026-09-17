@@ -5,9 +5,11 @@ import lombok.RequiredArgsConstructor;
 import ma.entraide.siipe.dto.request.PartenaireRequest;
 import ma.entraide.siipe.dto.response.PartenaireResponse;
 import ma.entraide.siipe.entity.User;
+import ma.entraide.siipe.enums.Role;
 import ma.entraide.siipe.service.PartenaireService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -24,16 +26,27 @@ public class PartenaireController {
 
     @GetMapping
     public ResponseEntity<List<PartenaireResponse>> getAll(@AuthenticationPrincipal User user) {
-        if (user.getProvince() != null &&
-                user.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DELEGUE"))) {
+        if (user.getRole() == Role.ROLE_DELEGUE) {
+            if (user.getProvince() == null) return ResponseEntity.ok(List.of());
             return ResponseEntity.ok(partenaireService.getByProvince(user.getProvince().getId()));
+        }
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            if (user.getRegion() == null) return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(partenaireService.getByRegion(user.getRegion().getId()));
         }
         return ResponseEntity.ok(partenaireService.getAll());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PartenaireResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(partenaireService.getById(id));
+    public ResponseEntity<PartenaireResponse> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
+        PartenaireResponse response = partenaireService.getById(id);
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            Long userRegionId = user.getRegion() != null ? user.getRegion().getId() : null;
+            if (userRegionId == null || !userRegionId.equals(response.getRegionId())) {
+                throw new AccessDeniedException("Accès refusé : ce partenaire n'appartient pas à votre région");
+            }
+        }
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping

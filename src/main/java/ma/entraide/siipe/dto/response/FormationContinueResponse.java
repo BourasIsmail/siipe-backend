@@ -21,6 +21,8 @@ public class FormationContinueResponse {
     private String attestationUrl;
     private Long etablissementCentreId;
     private String etablissementCentreNom;
+    private Long regionId;
+    private String regionNom;
     private List<PersonnelResponse> participants;
     private LocalDateTime createdAt;
     private String createdBy;

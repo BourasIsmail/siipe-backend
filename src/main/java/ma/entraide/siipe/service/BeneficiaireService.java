@@ -50,18 +50,23 @@ public class BeneficiaireService {
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
+    public List<BeneficiaireResponse> getByRegion(Long regionId) {
+        return beneficiaireRepo.findByEtablissementCentreRegionIdAndDeletedFalse(regionId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
     public List<BeneficiaireResponse> search(
             String nom, String prenom, String cin,
             Sexe sexe, SituationDifficulte situationDifficulte,
             LocalDate dateNaissanceFrom, LocalDate dateNaissanceTo,
             LocalDate dateEntreeFrom, LocalDate dateEntreeTo,
-            Long etablissementId, Long provinceId, String typeHandicap) {
+            Long etablissementId, Long provinceId, Long regionId, String typeHandicap) {
 
         Specification<Beneficiaire> spec = BeneficiaireSpecification.search(
                 nom, prenom, cin, sexe, situationDifficulte,
                 dateNaissanceFrom, dateNaissanceTo,
                 dateEntreeFrom, dateEntreeTo,
-                etablissementId, provinceId, typeHandicap);
+                etablissementId, provinceId, regionId, typeHandicap);
         return beneficiaireRepo.findAll(spec).stream()
                 .map(this::toResponse).collect(Collectors.toList());
     }
@@ -496,6 +501,10 @@ public class BeneficiaireService {
                         ? b.getEtablissementCentre().getProvince().getId() : null)
                 .provinceNom(b.getEtablissementCentre() != null && b.getEtablissementCentre().getProvince() != null
                         ? b.getEtablissementCentre().getProvince().getNomFr() : null)
+                .regionId(b.getEtablissementCentre() != null && b.getEtablissementCentre().getRegion() != null
+                        ? b.getEtablissementCentre().getRegion().getId() : null)
+                .regionNom(b.getEtablissementCentre() != null && b.getEtablissementCentre().getRegion() != null
+                        ? b.getEtablissementCentre().getRegion().getNomFr() : null)
                 .createdAt(b.getCreatedAt()).createdBy(b.getCreatedBy())
                 .updatedAt(b.getUpdatedAt()).updatedBy(b.getUpdatedBy())
                 .build();

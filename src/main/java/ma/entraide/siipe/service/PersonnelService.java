@@ -39,6 +39,11 @@ public class PersonnelService {
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
+    public List<PersonnelResponse> getByRegion(Long regionId) {
+        return personnelRepo.findByRegionId(regionId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
     public PersonnelResponse getById(Long id) {
         return toResponse(findById(id));
     }
@@ -193,6 +198,10 @@ public class PersonnelService {
                         ? p.getEtablissementCentre().getProvince().getId() : null)
                 .provinceNom(p.getEtablissementCentre() != null && p.getEtablissementCentre().getProvince() != null
                         ? p.getEtablissementCentre().getProvince().getNomFr() : null)
+                .regionId(p.getEtablissementCentre() != null && p.getEtablissementCentre().getRegion() != null
+                        ? p.getEtablissementCentre().getRegion().getId() : null)
+                .regionNom(p.getEtablissementCentre() != null && p.getEtablissementCentre().getRegion() != null
+                        ? p.getEtablissementCentre().getRegion().getNomFr() : null)
                 .organisation(p.getOrganisation())
                 .activite(p.getActivite())
                 .specialisation(p.getSpecialisation())

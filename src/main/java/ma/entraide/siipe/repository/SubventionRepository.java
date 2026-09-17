@@ -11,6 +11,7 @@ import java.util.List;
 public interface SubventionRepository extends JpaRepository<Subvention, Long> {
     List<Subvention> findByDeletedFalse();
     List<Subvention> findByEtablissementIdAndDeletedFalse(Long etablissementId);
+    List<Subvention> findByEtablissementRegionIdAndDeletedFalse(Long regionId);
     List<Subvention> findByPartenaireIdAndDeletedFalse(Long partenaireId);
     List<Subvention> findByStatutAndDeletedFalse(StatutSubvention statut);
 }

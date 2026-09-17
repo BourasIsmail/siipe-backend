@@ -31,6 +31,11 @@ public class EtablissementController {
             if (user.getProvince() == null) return ResponseEntity.ok(List.of());
             return ResponseEntity.ok(etablissementService.getByProvince(user.getProvince().getId()));
         }
+        // COORDINATION sees only their region
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            if (user.getRegion() == null) return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(etablissementService.getByRegion(user.getRegion().getId()));
+        }
         return ResponseEntity.ok(etablissementService.getAll());
     }
 
@@ -42,7 +47,7 @@ public class EtablissementController {
     @GetMapping("/{id}")
     public ResponseEntity<EtablissementResponse> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
         EtablissementResponse response = etablissementService.getById(id);
-        checkProvinceScope(user, response.getProvinceId());
+        checkScope(user, response.getProvinceId(), response.getRegionId());
         return ResponseEntity.ok(response);
     }
 
@@ -87,6 +92,16 @@ public class EtablissementController {
             Long userProvinceId = user.getProvince() != null ? user.getProvince().getId() : null;
             if (userProvinceId == null || !userProvinceId.equals(provinceId)) {
                 throw new AccessDeniedException("Accès refusé : cet établissement n'appartient pas à votre province");
+            }
+        }
+    }
+
+    private void checkScope(User user, Long provinceId, Long regionId) {
+        checkProvinceScope(user, provinceId);
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            Long userRegionId = user.getRegion() != null ? user.getRegion().getId() : null;
+            if (userRegionId == null || !userRegionId.equals(regionId)) {
+                throw new AccessDeniedException("Accès refusé : cet établissement n'appartient pas à votre région");
             }
         }
     }

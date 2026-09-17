@@ -9,4 +9,5 @@ import java.util.List;
 public interface FormationContinueRepository extends JpaRepository<FormationContinue, Long> {
     List<FormationContinue> findByDeletedFalse();
     List<FormationContinue> findByEtablissementCentreIdAndDeletedFalse(Long etablissementId);
+    List<FormationContinue> findByEtablissementCentreRegionIdAndDeletedFalse(Long regionId);
 }
