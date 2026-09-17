@@ -23,6 +23,8 @@ public class SubventionResponse {
     private String partenaireNom;
     private Long etablissementId;
     private String etablissementNom;
+    private Long regionId;
+    private String regionNom;
     private Long programmeId;
     private String programmeNom;
     private LocalDateTime createdAt;

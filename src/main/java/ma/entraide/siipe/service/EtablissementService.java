@@ -37,6 +37,11 @@ public class EtablissementService {
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
+    public List<EtablissementResponse> getByRegion(Long regionId) {
+        return etablissementRepo.findByRegionIdAndDeletedFalse(regionId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
     public EtablissementResponse getById(Long id) {
         return toResponse(findById(id));
     }

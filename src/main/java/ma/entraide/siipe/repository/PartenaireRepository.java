@@ -10,4 +10,5 @@ import java.util.List;
 public interface PartenaireRepository extends JpaRepository<Partenaire, Long> {
     List<Partenaire> findByDeletedFalse();
     List<Partenaire> findByProvinceIdAndDeletedFalse(Long provinceId);
+    List<Partenaire> findByRegionIdAndDeletedFalse(Long regionId);
 }

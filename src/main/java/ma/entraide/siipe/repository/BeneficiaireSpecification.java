@@ -24,6 +24,7 @@ public class BeneficiaireSpecification {
             LocalDate dateEntreeTo,
             Long etablissementId,
             Long provinceId,
+            Long regionId,
             String typeHandicap
     ) {
         return (root, query, cb) -> {
@@ -63,6 +64,9 @@ public class BeneficiaireSpecification {
             }
             if (provinceId != null) {
                 predicates.add(cb.equal(root.get("etablissementCentre").get("province").get("id"), provinceId));
+            }
+            if (regionId != null) {
+                predicates.add(cb.equal(root.get("etablissementCentre").get("region").get("id"), regionId));
             }
 
             query.orderBy(cb.desc(root.get("createdAt")));

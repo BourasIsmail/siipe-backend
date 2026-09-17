@@ -38,6 +38,10 @@ public class BeneficiaireController {
             if (user.getProvince() == null) return ResponseEntity.ok(List.of());
             return ResponseEntity.ok(beneficiaireService.getByProvince(user.getProvince().getId()));
         }
+        if (user.getRole() == Role.ROLE_COORDINATION) {
+            if (user.getRegion() == null) return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(beneficiaireService.getByRegion(user.getRegion().getId()));
+        }
         return ResponseEntity.ok(beneficiaireService.getAll());
     }
 
@@ -54,32 +58,36 @@ public class BeneficiaireController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateEntreeTo,
             @RequestParam(required = false) Long etablissementId,
             @RequestParam(required = false) Long provinceId,
+            @RequestParam(required = false) Long regionId,
             @RequestParam(required = false) String typeHandicap,
             @AuthenticationPrincipal User user) {
 
         Long filteredProvinceId = provinceId;
         Long filteredEtablissementId = etablissementId;
+        Long filteredRegionId = regionId;
         if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE || user.getRole() == Role.ROLE_ASSISTANTE_SOCIALE) {
             filteredEtablissementId = user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : -1L;
         } else if (user.getRole() == Role.ROLE_DELEGUE) {
             filteredProvinceId = user.getProvince() != null ? user.getProvince().getId() : -1L;
+        } else if (user.getRole() == Role.ROLE_COORDINATION) {
+            filteredRegionId = user.getRegion() != null ? user.getRegion().getId() : -1L;
         }
 
         return ResponseEntity.ok(beneficiaireService.search(
                 nom, prenom, cin, sexe, situationDifficulte,
                 dateNaissanceFrom, dateNaissanceTo,
                 dateEntreeFrom, dateEntreeTo,
-                filteredEtablissementId, filteredProvinceId, typeHandicap));
+                filteredEtablissementId, filteredProvinceId, filteredRegionId, typeHandicap));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<BeneficiaireResponse> getById(@PathVariable Long id, @AuthenticationPrincipal User user) {
         BeneficiaireResponse response = beneficiaireService.getById(id);
-        checkScopeAccess(user, response.getProvinceId(), response.getEtablissementCentreId());
+        checkScopeAccess(user, response.getProvinceId(), response.getEtablissementCentreId(), response.getRegionId());
         return ResponseEntity.ok(response);
     }
 
-    private void checkScopeAccess(User user, Long provinceId, Long etablissementCentreId) {
+    private void checkScopeAccess(User user, Long provinceId, Long etablissementCentreId, Long regionId) {
         if (user.getRole() == Role.ROLE_DIRECTEUR_CENTRALE || user.getRole() == Role.ROLE_ASSISTANTE_SOCIALE) {
             Long userEtablissementId = user.getEtablissementCentre() != null ? user.getEtablissementCentre().getId() : null;
             if (userEtablissementId == null || !userEtablissementId.equals(etablissementCentreId)) {
@@ -89,6 +97,11 @@ public class BeneficiaireController {
             Long userProvinceId = user.getProvince() != null ? user.getProvince().getId() : null;
             if (userProvinceId == null || !userProvinceId.equals(provinceId)) {
                 throw new AccessDeniedException("Accès refusé : ce bénéficiaire n'appartient pas à votre province");
+            }
+        } else if (user.getRole() == Role.ROLE_COORDINATION) {
+            Long userRegionId = user.getRegion() != null ? user.getRegion().getId() : null;
+            if (userRegionId == null || !userRegionId.equals(regionId)) {
+                throw new AccessDeniedException("Accès refusé : ce bénéficiaire n'appartient pas à votre région");
             }
         }
     }

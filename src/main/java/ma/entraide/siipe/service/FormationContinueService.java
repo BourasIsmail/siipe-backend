@@ -34,6 +34,11 @@ public class FormationContinueService {
                 .map(this::toResponse).collect(Collectors.toList());
     }
 
+    public List<FormationContinueResponse> getByRegion(Long regionId) {
+        return formationRepo.findByEtablissementCentreRegionIdAndDeletedFalse(regionId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
     public FormationContinueResponse getById(Long id) {
         return toResponse(findById(id));
     }
@@ -105,6 +110,10 @@ public class FormationContinueService {
                 .attestationUrl(f.getAttestationUrl())
                 .etablissementCentreId(f.getEtablissementCentre() != null ? f.getEtablissementCentre().getId() : null)
                 .etablissementCentreNom(f.getEtablissementCentre() != null ? f.getEtablissementCentre().getNomFr() : null)
+                .regionId(f.getEtablissementCentre() != null && f.getEtablissementCentre().getRegion() != null
+                        ? f.getEtablissementCentre().getRegion().getId() : null)
+                .regionNom(f.getEtablissementCentre() != null && f.getEtablissementCentre().getRegion() != null
+                        ? f.getEtablissementCentre().getRegion().getNomFr() : null)
                 .participants(f.getParticipants() != null ? f.getParticipants().stream()
                         .map(personnelService::toResponse).collect(Collectors.toList()) : List.of())
                 .createdAt(f.getCreatedAt())

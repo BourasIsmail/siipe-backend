@@ -31,6 +31,11 @@ public class SubventionService {
         return toResponse(findById(id));
     }
 
+    public List<SubventionResponse> getByRegion(Long regionId) {
+        return subventionRepo.findByEtablissementRegionIdAndDeletedFalse(regionId).stream()
+                .map(this::toResponse).collect(Collectors.toList());
+    }
+
     public SubventionResponse create(SubventionRequest request) {
         Subvention s = new Subvention();
         mapRequestToEntity(request, s);
@@ -98,6 +103,10 @@ public class SubventionService {
                 .partenaireNom(s.getPartenaire() != null ? s.getPartenaire().getNomFr() : null)
                 .etablissementId(s.getEtablissement() != null ? s.getEtablissement().getId() : null)
                 .etablissementNom(s.getEtablissement() != null ? s.getEtablissement().getNomFr() : null)
+                .regionId(s.getEtablissement() != null && s.getEtablissement().getRegion() != null
+                        ? s.getEtablissement().getRegion().getId() : null)
+                .regionNom(s.getEtablissement() != null && s.getEtablissement().getRegion() != null
+                        ? s.getEtablissement().getRegion().getNomFr() : null)
                 .programmeId(s.getProgramme() != null ? s.getProgramme().getId() : null)
                 .programmeNom(s.getProgramme() != null ? s.getProgramme().getNomFr() : null)
                 .createdAt(s.getCreatedAt())

@@ -16,5 +16,6 @@ public interface BeneficiaireRepository extends JpaRepository<Beneficiaire, Long
     List<Beneficiaire> findByDeletedFalse();
     List<Beneficiaire> findByEtablissementCentreIdAndDeletedFalse(Long etablissementId);
     List<Beneficiaire> findByEtablissementCentreProvinceIdAndDeletedFalse(Long provinceId);
+    List<Beneficiaire> findByEtablissementCentreRegionIdAndDeletedFalse(Long regionId);
     boolean existsByCin(String cin);
 }

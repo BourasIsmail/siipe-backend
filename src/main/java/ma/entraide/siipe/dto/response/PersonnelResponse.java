@@ -43,6 +43,8 @@ public class PersonnelResponse {
     private String prestationNom;
     private Long provinceId;
     private String provinceNom;
+    private Long regionId;
+    private String regionNom;
 
     // Evaluation scores
     private Integer organisation;
