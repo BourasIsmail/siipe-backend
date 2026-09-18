@@ -45,6 +45,11 @@ public class SecurityConfig {
                                 "/api/auth/reset-password/**"
                         ).permitAll()
                         .requestMatchers("/api/files/**", "/api/files").permitAll()
+                        // Spring Boot forwards every error response to /error to render it; on this
+                        // stateless setup the JWT filter (OncePerRequestFilter) doesn't re-run on that
+                        // internal forward, so without this the forward is evaluated as anonymous and
+                        // can overwrite an already-correct 403 with a 401 from the entry point below.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
