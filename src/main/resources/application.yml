@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/siipe_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password: root
+    url: jdbc:mysql://172.16.20.111:3306/entraide_siipe_java_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: siipe_java
+    password: Entraide**57
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
