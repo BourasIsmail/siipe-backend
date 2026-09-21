@@ -46,10 +46,10 @@ app:
     expiration: 86400000  # 24 hours in ms
     reset-password-expiration: 3600000  # 1 hour in ms
 
-  frontend-url: http://localhost:4200
+  frontend-url: http://172.16.20.164
 
   upload:
     dir: ./uploads
 
 cors:
-  allowed-origins: http://localhost:4200
+  allowed-origins: http://172.16.20.164,http://grh.entraide.ma,http://localhost:4200
